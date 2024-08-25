@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+
+import subprocess
+import sys
+import argparse
+import re
+from termcolor import colored
+
+def log_info(message):
+    print(colored("[INFO] ", "blue") + message)
+
+def run_command(command):
+    log_info(f"Command: {command}")
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+
+    log_info("Output:")
+    output = stdout.decode()
+    print(output)
+
+    if stderr:
+        log_info("Errors:")
+        print(stderr.decode(), file=sys.stderr)
+
+    return output
+
+def identify_web_ports(nmap_output):
+    web_ports = []
+    excluded_ports = {'5357', '5985'}
+    lines = nmap_output.splitlines()
+
+    for line in lines:
+        # Look for lines that indicate HTTP or HTTPS services
+        if "http" in line or "ssl/http" in line:
+            # Extract the port number (e.g., "80/tcp")
+            match = re.match(r"(\d+)/tcp", line)
+            if match:
+                port = match.group(1)
+                # Only include the port if it is not in the excluded list
+                if port not in excluded_ports:
+                    web_ports.append(port)
+
+    return web_ports
+
+def main():
+    parser = argparse.ArgumentParser(description="Run a series of recon tools on a specified target.")
+    parser.add_argument("target", help="Target IP address or hostname")
+    args = parser.parse_args()
+
+    target = args.target
+
+    log_info(f"Starting recon on target: {target}")
+
+    # Run an Nmap scan to identify open ports and services
+    nmap_command = f"sudo nmap -sC -sV -oN {target}_nmap.txt {target}"
+    log_info(f"Starting Nmap scan on {target}")
+    nmap_output = run_command(nmap_command)
+
+    # Identify web server ports from Nmap output, excluding certain ports
+    web_ports = identify_web_ports(nmap_output)
+    log_info(f"Identified web server ports (excluding 5357, 5985): {', '.join(web_ports)}")
+
+    for port in web_ports:
+        # Run FFUF on identified web server ports
+        ffuf_command = f"ffuf -u http://{target}:{port}/FUZZ -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o {target}_ffuf_{port}.txt"
+        log_info(f"Starting FFUF scan on {target}:{port}")
+        run_command(ffuf_command)
+
+        # Run Feroxbuster on identified web server ports
+        feroxbuster_command = f"feroxbuster -u http://{target}:{port} -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o {target}_feroxbuster_{port}.txt"
+        log_info(f"Starting Feroxbuster scan on {target}:{port}")
+        run_command(feroxbuster_command)
+
+    # Run Netexec on the target
+    cme_command = f"netexec smb {target} --shares"
+    log_info(f"Starting Netexec SMB scan on {target}")
+    run_command(cme_command)
+
+    log_info(f"Recon finished for target: {target}")
+
+if __name__ == "__main__":
+    main()
