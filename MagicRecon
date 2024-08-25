@@ -5,6 +5,7 @@ import sys
 import argparse
 import re
 from termcolor import colored
+import requests
 
 def log_info(message):
     print(colored("[INFO] ", "blue") + message)
@@ -42,6 +43,19 @@ def identify_web_ports(nmap_output):
 
     return web_ports
 
+def fetch_robots_txt(target, port):
+    url = f"http://{target}:{port}/robots.txt"
+    log_info(f"Checking for robots.txt at {url}")
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            log_info(f"Found robots.txt on {target}:{port}")
+            print(response.text)
+        else:
+            log_info(f"No robots.txt found on {target}:{port}")
+    except requests.RequestException as e:
+        log_info(f"Failed to fetch robots.txt on {target}:{port}: {str(e)}")
+
 def main():
     parser = argparse.ArgumentParser(description="Run a series of recon tools on a specified target.")
     parser.add_argument("target", help="Target IP address or hostname")
@@ -61,6 +75,9 @@ def main():
     log_info(f"Identified web server ports (excluding 5357, 5985): {', '.join(web_ports)}")
 
     for port in web_ports:
+        # Fetch robots.txt if it exists
+        fetch_robots_txt(target, port) 
+
         # Run FFUF on identified web server ports
         ffuf_command = f"ffuf -u http://{target}:{port}/FUZZ -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o {target}_ffuf_{port}.txt"
         log_info(f"Starting FFUF scan on {target}:{port}")
