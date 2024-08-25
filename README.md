@@ -48,7 +48,3 @@ MagicRecon is licensed under the GNU GENERAL PUBLIC LICENSE Version 3. See the [
 ## Contributing
 
 Contributions to MagicRecon are welcome! Please see the [CONTRIBUTING](CONTRIBUTING.md) file for more information on how to contribute.
-
-## Contact
-
-For any questions or issues, please reach out to [your-email@example.com](mailto:your-email@example.com).
