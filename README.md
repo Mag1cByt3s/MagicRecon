@@ -2,15 +2,21 @@
 
 `MagicRecon` is an advanced, easy-to-use tool designed to streamline and automate the reconnaissance phase of penetration testing. It enables security professionals to efficiently gather critical information about their target environment, ensuring a comprehensive overview of potential attack vectors.
 
+<br>
+
 With `MagicRecon`, you can:
 
 - **Automate Information Gathering:** Quickly identify open ports, services, subdomains, and other critical data points.
 - **Run Multiple Recon Tools:** Automatically execute a series of reconnaissance tools including Nmap, FFUF, Feroxbuster, and Netexec.
 - **Filter and Process Results:** Identify and process only relevant web services while excluding known non-useful HTTP ports.
 
+<br>
+
 ## Usage
 
 To run `MagicRecon`, you need to provide a target IP address or hostname. The tool will then execute the reconnaissance tools on the target and generate output files for each tool.
+
+<br>
 
 ### Basic Command
 
@@ -35,15 +41,21 @@ This command will:
 3. **Run FFUF and Feroxbuster:** Execute web directory scanning tools (`ffuf` and `feroxbuster`) on identified web server ports.
 4. **Run CrackMapExec:** Perform a CrackMapExec scan to enumerate SMB shares on the target.
 
+<br>
+
 ### Notes
 
 - **Permissions:** Some tools require root or administrative privileges to run. Ensure you have the necessary permissions before executing the script.
 - **Dependencies:** The script relies on several external tools (`nmap`, `ffuf`, `feroxbuster`, and `crackmapexec`). Make sure these tools are installed and properly configured on your system.
 - **Default Wordlists:** The script uses default wordlists for `ffuf` and `feroxbuster`. You can customize these if needed.
 
+<br>
+
 ## License
 
 MagicRecon is licensed under the GNU GENERAL PUBLIC LICENSE Version 3. See the [LICENSE](LICENSE) file for details.
+
+<br>
 
 ## Contributing
 
