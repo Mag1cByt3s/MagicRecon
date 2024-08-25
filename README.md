@@ -33,7 +33,7 @@ To run `MagicRecon`, you need to provide a target IP address or hostname. The to
 ```bash
 ./MagicRecon 127.0.0.1
 ```
-
+<br>
 This command will:
 
 1. **Run an Nmap Scan:** Perform a comprehensive scan of the target to identify open ports and services.
