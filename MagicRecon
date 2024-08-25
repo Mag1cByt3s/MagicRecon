@@ -7,8 +7,10 @@ import re
 from termcolor import colored
 import requests
 
+
 def log_info(message):
     print(colored("[INFO] ", "blue") + message)
+
 
 def run_command(command):
     log_info(f"Command: {command}")
@@ -24,6 +26,7 @@ def run_command(command):
         print(stderr.decode(), file=sys.stderr)
 
     return output
+
 
 def identify_web_ports(nmap_output):
     web_ports = []
@@ -43,6 +46,7 @@ def identify_web_ports(nmap_output):
 
     return web_ports
 
+
 def fetch_robots_txt(target, port):
     url = f"http://{target}:{port}/robots.txt"
     log_info(f"Checking for robots.txt at {url}")
@@ -55,6 +59,62 @@ def fetch_robots_txt(target, port):
             log_info(f"No robots.txt found on {target}:{port}")
     except requests.RequestException as e:
         log_info(f"Failed to fetch robots.txt on {target}:{port}: {str(e)}")
+
+
+def detect_vhost(target, port):
+    url = f"http://{target}:{port}/"
+    curl_command = f"curl -Ls -w '%{{url_effective}}\\n' -o /dev/null {url}"
+    
+    log_info(f"Checking for vhost on {url}")
+    
+    try:
+        process = subprocess.Popen(curl_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        
+        if process.returncode == 0:
+            detected_url = stdout.decode().strip()
+            if detected_url != url:
+                vhost = detected_url.replace("http://", "").replace("/", "")
+                log_info(f"Detected vhost: {vhost}")
+                
+                # Add vhost to /etc/hosts
+                add_vhost_to_hosts(target, vhost)
+                
+                return vhost
+            else:
+                log_info(f"No vhost detected on {target}:{port}")
+                return None
+        else:
+            log_info(f"Error detecting vhost on {target}:{port}: {stderr.decode()}")
+            return None
+    
+    except Exception as e:
+        log_info(f"Exception occurred while detecting vhost on {target}:{port}: {str(e)}")
+        return None
+
+
+def add_vhost_to_hosts(target, vhost):
+    hosts_path = "/etc/hosts"
+    entry = f"{target} {vhost}\n"
+    
+    # Check if the entry already exists
+    try:
+        with open(hosts_path, "r") as hosts_file:
+            if entry.strip() in hosts_file.read():
+                log_info(f"Vhost {vhost} already exists in /etc/hosts")
+                return
+    except Exception as e:
+        log_info(f"Error reading /etc/hosts: {str(e)}")
+        return
+
+    # Add the entry
+    try:
+        with open(hosts_path, "a") as hosts_file:
+            hosts_file.write(entry)
+        log_info(f"Added vhost {vhost} to /etc/hosts")
+    except Exception as e:
+        log_info(f"Error writing to /etc/hosts: {str(e)}")
+    
 
 def main():
     parser = argparse.ArgumentParser(description="Run a series of recon tools on a specified target.")
@@ -75,6 +135,9 @@ def main():
     log_info(f"Identified web server ports (excluding 5357, 5985): {', '.join(web_ports)}")
 
     for port in web_ports:
+        # Detect vhost if it exists
+        vhost = detect_vhost(target, port)
+
         # Fetch robots.txt if it exists
         fetch_robots_txt(target, port) 
 
