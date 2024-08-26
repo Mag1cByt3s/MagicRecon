@@ -1,0 +1,1 @@
+# Nmap 7.95 scan initiated Mon Aug 26 19:38:17 2024 as: nmap -sC -sV --version-all -O -p53,80,88,135,139,389,445,464,636,1433,3268,3269,9389 -vvv -oN 10.10.11.22/nmap/10.10.11.22_detailed_nmap.txt 10.10.11.22

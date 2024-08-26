@@ -1,0 +1,106 @@
+# Nmap 7.95 scan initiated Mon Aug 26 19:38:17 2024 as: nmap -sC -sV --version-all -O -p53,80,88,135,139,389,445,464,636,1433,3268,3269,9389 -vvv -oN 10.10.11.22/nmap/10.10.11.22_nmap.txt 10.10.11.22
+Nmap scan report for blazorized.htb (10.10.11.22)
+Host is up, received echo-reply ttl 127 (0.19s latency).
+Scanned at 2024-08-26 19:38:17 CEST for 99s
+
+PORT     STATE SERVICE       REASON          VERSION
+53/tcp   open  domain        syn-ack ttl 127 Simple DNS Plus
+80/tcp   open  http          syn-ack ttl 127 Microsoft IIS httpd 10.0
+|_http-server-header: Microsoft-IIS/10.0
+|_http-favicon: Unknown favicon MD5: 4ED916C575B07AD638ED9DBD55219AD5
+|_http-title: Mozhar's Digital Garden
+| http-methods: 
+|   Supported Methods: OPTIONS TRACE GET HEAD POST
+|_  Potentially risky methods: TRACE
+88/tcp   open  kerberos-sec  syn-ack ttl 127 Microsoft Windows Kerberos (server time: 2024-08-26 17:38:36Z)
+135/tcp  open  msrpc         syn-ack ttl 127 Microsoft Windows RPC
+139/tcp  open  netbios-ssn   syn-ack ttl 127 Microsoft Windows netbios-ssn
+389/tcp  open  ldap          syn-ack ttl 127 Microsoft Windows Active Directory LDAP (Domain: blazorized.htb0., Site: Default-First-Site-Name)
+445/tcp  open  microsoft-ds? syn-ack ttl 127
+464/tcp  open  kpasswd5?     syn-ack ttl 127
+636/tcp  open  tcpwrapped    syn-ack ttl 127
+1433/tcp open  ms-sql-s      syn-ack ttl 127 Microsoft SQL Server 2022
+| ssl-cert: Subject: commonName=SSL_Self_Signed_Fallback
+| Issuer: commonName=SSL_Self_Signed_Fallback
+| Public Key type: rsa
+| Public Key bits: 3072
+| Signature Algorithm: sha256WithRSAEncryption
+| Not valid before: 2024-08-26T14:35:32
+| Not valid after:  2054-08-26T14:35:32
+| MD5:   c120:c74d:1cc5:e143:99d4:9f8b:4773:4241
+| SHA-1: 3496:52f3:a265:67be:03d3:854a:8eab:a802:7167:59e1
+| -----BEGIN CERTIFICATE-----
+| MIIEADCCAmigAwIBAgIQS98PmUqhlo1NvqWPGR4oKzANBgkqhkiG9w0BAQsFADA7
+| MTkwNwYDVQQDHjAAUwBTAEwAXwBTAGUAbABmAF8AUwBpAGcAbgBlAGQAXwBGAGEA
+| bABsAGIAYQBjAGswIBcNMjQwODI2MTQzNTMyWhgPMjA1NDA4MjYxNDM1MzJaMDsx
+| OTA3BgNVBAMeMABTAFMATABfAFMAZQBsAGYAXwBTAGkAZwBuAGUAZABfAEYAYQBs
+| AGwAYgBhAGMAazCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoCggGBANWPfN1R
+| RAKZpN8i+tB3KWlt07Klzi/v674BumsK2ZWoy4ZFEw4iziffmqKpB8Rn7PRKgLfU
+| /gFd1lgJ5pITXEVA5CxqhXdb61QNEXqxbYUr6cWMxT63SAOL+cuzU7Fr2fmT7Q0v
+| 2CR8UDU6bKAR2MGL8EU/ENtI66xsBL6fmEpb7EwzvaFhD6PyUSm+5xFUobFv0xRj
+| 9z0qs8fnLW27G1UyfzXxoeCn8w8drDnfFaN8UdkNhnyw+1CVm8gdtz08ZxVS8zlw
+| g9vBDiq1x2NUxtBK+GMlITJsT+QADqkU0YxTHJDsriY4KeYZvCWoS5cu8OANq32h
+| ySkqOuI8sXY4WaIPRnvlj/eD8iVAonFAuw01QF+krELX4jSt0vQznQKlqhJ37uIb
+| 8KXtOWcjWbgPEk001CNkxkMkZbLJwO7SLsfgxVaxLF2WVxz2VqlvGFMc7FmMvuN9
+| 5XlWWaTUlaFTpELaJcbjPToeW1UU5hRYT5D1PLZnKqRo6AbV+kM5dTOZ2QIDAQAB
+| MA0GCSqGSIb3DQEBCwUAA4IBgQDPdK7VVntPDSrT3/beLSFmepCfZwR09pP6ytv2
+| I+VzAebWO0YP7bsNsmnYG2WNFoJSUlcG6HokUeRZzC4NKwc8snKsJ/MY26nJz4hc
+| 5bEAqk6bvmBWCvc98PvhpvNYSTS3FH5+u/q4Sj/y6aH5kd8F3IRkahrQBmN1o64+
+| pwTMmaVqPe83hne6Ih0C8iZyZrUrQJj9/pfjBhA7IxozZc4/5ATRIFFCSn5k+q4C
+| WMnqgJ++ZwfozXkvMVtQHmH6Sus+3QIyWRzgD51qrcH/mkYftEIGoP7ECFjPWdLe
+| lFtSm937cSmVVWmk38YScHE0T+jKaJzvAKoTRfZ1MWdaTnEfdWRoP4XQsuoGA4Q0
+| YeuzxYNLjH3Dpvgd60LSkgklWoRV1M/60k9xe27HN4uSIAcBVcILOHJ5kVCSs3n5
+| a9mXcgPvOKNxfxaHhh3HNvvGboXdXXXISuzdBrElTyP5dpRFNqZJDWvDJSv/TzU1
+| keUXOpmylPM1y8JeLb0AiwrRtu4=
+|_-----END CERTIFICATE-----
+|_ms-sql-info: ERROR: Script execution failed (use -d to debug)
+|_ssl-date: 2024-08-26T17:40:04+00:00; +12s from scanner time.
+|_ms-sql-ntlm-info: ERROR: Script execution failed (use -d to debug)
+3268/tcp open  ldap          syn-ack ttl 127 Microsoft Windows Active Directory LDAP (Domain: blazorized.htb0., Site: Default-First-Site-Name)
+3269/tcp open  tcpwrapped    syn-ack ttl 127
+9389/tcp open  mc-nmf        syn-ack ttl 127 .NET Message Framing
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+OS fingerprint not ideal because: Missing a closed TCP port so results incomplete
+Aggressive OS guesses: Microsoft Windows Server 2019 (95%), Microsoft Windows Server 2016 (94%), Microsoft Windows 10 1709 - 21H2 (92%), Microsoft Windows 10 1903 (92%), Microsoft Windows Server 2022 (92%), Microsoft Windows Vista SP1 (92%), Microsoft Windows 10 (91%), Microsoft Windows Longhorn (91%), Microsoft Windows 10 21H1 (91%), Microsoft Windows Server 2012 (91%)
+No exact OS matches for host (test conditions non-ideal).
+TCP/IP fingerprint:
+SCAN(V=7.95%E=4%D=8/26%OT=53%CT=%CU=31651%PV=Y%DS=2%DC=I%G=N%TM=66CCBDEC%P=x86_64-pc-linux-gnu)
+SEQ(SP=103%GCD=1%ISR=104%TI=I%CI=RD%II=I%SS=S%TS=U)
+SEQ(SP=F8%GCD=1%ISR=106%TI=I%CI=I%II=I%SS=O%TS=U)
+OPS(O1=M53ANW8NNS%O2=M53ANW8NNS%O3=M53ANW8%O4=M53ANW8NNS%O5=M53ANW8NNS%O6=M53ANNS)
+WIN(W1=FFFF%W2=FFFF%W3=FFFF%W4=FFFF%W5=FFFF%W6=FF70)
+ECN(R=Y%DF=Y%T=80%W=FFFF%O=M53ANW8NNS%CC=Y%Q=)
+T1(R=Y%DF=Y%T=80%S=O%A=S+%F=AS%RD=0%Q=)
+T2(R=Y%DF=Y%T=80%W=0%S=Z%A=S%F=AR%O=%RD=0%Q=)
+T3(R=Y%DF=Y%T=80%W=0%S=Z%A=O%F=AR%O=%RD=0%Q=)
+T4(R=Y%DF=Y%T=80%W=0%S=A%A=O%F=R%O=%RD=0%Q=)
+T5(R=Y%DF=Y%T=80%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)
+T6(R=Y%DF=Y%T=80%W=0%S=A%A=O%F=R%O=%RD=0%Q=)
+T7(R=Y%DF=Y%T=80%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)
+U1(R=Y%DF=N%T=80%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)
+IE(R=Y%DFI=N%T=80%CD=Z)
+
+Network Distance: 2 hops
+TCP Sequence Prediction: Difficulty=259 (Good luck!)
+IP ID Sequence Generation: Incremental
+Service Info: Host: DC1; OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+|_clock-skew: mean: 11s, deviation: 0s, median: 11s
+| p2p-conficker: 
+|   Checking for Conficker.C or higher...
+|   Check 1 (port 49214/tcp): CLEAN (Couldn't connect)
+|   Check 2 (port 16905/tcp): CLEAN (Couldn't connect)
+|   Check 3 (port 35591/udp): CLEAN (Failed to receive data)
+|   Check 4 (port 12265/udp): CLEAN (Timeout)
+|_  0/4 checks are positive: Host is CLEAN or ports are blocked
+| smb2-time: 
+|   date: 2024-08-26T17:39:56
+|_  start_date: N/A
+| smb2-security-mode: 
+|   3:1:1: 
+|_    Message signing enabled and required
+
+Read data files from: /usr/bin/../share/nmap
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Mon Aug 26 19:39:56 2024 -- 1 IP address (1 host up) scanned in 99.50 seconds

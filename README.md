@@ -22,7 +22,9 @@ To run `MagicRecon`, you need to provide a target IP address or hostname. The to
 
 ### Basic Command
 
-./MagicRecon <target> [<vhost>]
+```bash
+sudo ./MagicRecon <target> [<vhost>]
+```
 
 - **`<target>`**: The IP address or hostname of the target you want to scan.
 - **`<vhost>`**: The vhost of the target you want to scan. This parameter is optional but required for vhost-based subdomain enumeration.
@@ -34,7 +36,7 @@ To run `MagicRecon`, you need to provide a target IP address or hostname. The to
 ### Example
 
 ```bash
-./MagicRecon 127.0.0.1
+sudo ./MagicRecon 10.10.11.22 blazorized.htb
 ```
 <br>
 This command will:
