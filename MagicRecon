@@ -140,12 +140,7 @@ def main():
 
         # Fetch robots.txt if it exists
         fetch_robots_txt(target, port) 
-
-        # Run FFUF on identified web server ports
-        ffuf_command = f"ffuf -u http://{target}:{port}/FUZZ -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o {target}_ffuf_{port}.txt"
-        log_info(f"Starting FFUF scan on {target}:{port}")
-        run_command(ffuf_command)
-
+        
         # Run Feroxbuster on identified web server ports
         feroxbuster_command = f"feroxbuster -u http://{target}:{port} -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o {target}_feroxbuster_{port}.txt"
         log_info(f"Starting Feroxbuster scan on {target}:{port}")
