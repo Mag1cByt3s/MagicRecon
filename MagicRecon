@@ -6,10 +6,22 @@ import argparse
 import re
 from termcolor import colored
 import requests
+import os
+import shlex
 
 
 def log_info(message):
     print(colored("[INFO] ", "blue") + message)
+
+
+def log_warning(message):
+    print(colored("[WARNING] ", "yellow") + message)
+
+
+def check_root():
+    if os.geteuid() != 0:
+        log_warning("This script needs to be run as root or with sudo.")
+        sys.exit(1)
 
 
 def run_command(command):
@@ -61,38 +73,6 @@ def fetch_robots_txt(target, port):
         log_info(f"Failed to fetch robots.txt on {target}:{port}: {str(e)}")
 
 
-def detect_vhost(target, port):
-    url = f"http://{target}:{port}/"
-    curl_command = f"curl -Ls -w '%{{url_effective}}\\n' -o /dev/null {url}"
-    
-    log_info(f"Checking for vhost on {url}")
-    
-    try:
-        process = subprocess.Popen(curl_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        
-        if process.returncode == 0:
-            detected_url = stdout.decode().strip()
-            if detected_url != url:
-                vhost = detected_url.replace("http://", "").replace("/", "")
-                log_info(f"Detected vhost: {vhost}")
-                
-                # Add vhost to /etc/hosts
-                add_vhost_to_hosts(target, vhost)
-                
-                return vhost
-            else:
-                log_info(f"No vhost detected on {target}:{port}")
-                return None
-        else:
-            log_info(f"Error detecting vhost on {target}:{port}: {stderr.decode()}")
-            return None
-    
-    except Exception as e:
-        log_info(f"Exception occurred while detecting vhost on {target}:{port}: {str(e)}")
-        return None
-
-
 def add_vhost_to_hosts(target, vhost):
     hosts_path = "/etc/hosts"
     entry = f"{target} {vhost}\n"
@@ -114,19 +94,107 @@ def add_vhost_to_hosts(target, vhost):
         log_info(f"Added vhost {vhost} to /etc/hosts")
     except Exception as e:
         log_info(f"Error writing to /etc/hosts: {str(e)}")
+
+
+def detect_vhost(target, port):
+    url = f"http://{target}:{port}/"
+    curl_command = f"curl -Ls -w '%{{url_effective}}\\n' -o /dev/null {url}"
     
+    log_info(f"Checking for vhost on {url}")
+    log_info(f"Running command: {curl_command}")
+
+    try:
+        # Use subprocess.run for simplicity and direct output capture
+        result = subprocess.run(curl_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # Capture and log the output and errors
+        output = result.stdout.strip()
+        errors = result.stderr.strip()
+        returncode = result.returncode
+
+        log_info(f"Curl output: {output}")
+        log_info(f"Curl errors: {errors}")
+        
+        if returncode == 0:
+            detected_url = output
+            if detected_url and detected_url != url:
+                vhost = detected_url.replace("http://", "").replace("/", "")
+                if not vhost.startswith("xn--"):
+                    log_info(f"Detected vhost: {vhost}")
+                
+                    # Add vhost to /etc/hosts
+                    add_vhost_to_hosts(target, vhost)
+                
+                return vhost
+            else:
+                log_info(f"No vhost detected on {target}:{port}")
+                return None
+        else:
+            log_info(f"Error detecting vhost on {target}:{port}: {errors}")
+            return None
+
+    except Exception as e:
+        log_info(f"Exception occurred while detecting vhost on {target}:{port}: {str(e)}")
+        return None
+
+
+def detect_vhost_subdomains(target, port, vhost):
+    # Define the path to the wordlist for subdomain enumeration
+    wordlist_path = '/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt'
+    # Construct the gobuster command
+    gobuster_command = f"gobuster vhost -u {vhost} -w {wordlist_path} -t 50 --append-domain"
+    
+    log_info(f"Starting Gobuster VHOST enumeration on {vhost} with wordlist {wordlist_path}")
+    
+    try:
+        # Run gobuster
+        process = subprocess.Popen(gobuster_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        
+        if process.returncode == 0:
+            # Process gobuster output to find valid vhosts
+            output = stdout.decode()
+            lines = output.splitlines()
+            for line in lines:
+                # Example line: "Found: cacti.monitorsthree.htb Status: 302 [Size: 0] [--> /cacti]"
+                match = re.search(r"Found:\s+(\S+)", line)
+                if match:
+                    discovered_vhost = match.group(1)
+                    # Add the discovered vhost to /etc/hosts
+                    add_vhost_to_hosts(target, discovered_vhost)
+                    log_info(f"Discovered vhost: {discovered_vhost}")
+                    # add discovered vhost to file vhosts.txt
+                    with open(f"{target}/vhosts.txt", "a") as f:
+                        f.write(f"{discovered_vhost}\n")
+        else:
+            log_info(f"Error running Gobuster: {stderr.decode()}")
+    
+    except Exception as e:
+        log_info(f"Exception occurred while running Gobuster: {str(e)}")
+
 
 def main():
+    check_root()  # Ensure the script is running with root privileges
+
     parser = argparse.ArgumentParser(description="Run a series of recon tools on a specified target.")
     parser.add_argument("target", help="Target IP address or hostname")
+    parser.add_argument("vhost", help="Target vhost", default=None)
     args = parser.parse_args()
 
     target = args.target
 
+    # initially set vhost to None
+    vhost = None
+
+    # creating folders for target
+    os.makedirs(target, exist_ok=True)
+    os.makedirs(f"{target}/nmap", exist_ok=True)
+    os.makedirs(f"{target}/feroxbuster", exist_ok=True)
+
     log_info(f"Starting recon on target: {target}")
 
     # Run an Nmap scan to identify open ports and services
-    nmap_command = f"sudo nmap -sC -sV -oN {target}_nmap.txt {target}"
+    nmap_command = f"nmap -sC -sV -oN {target}/nmap/{target}_nmap.txt {target}"
     log_info(f"Starting Nmap scan on {target}")
     nmap_output = run_command(nmap_command)
 
@@ -135,14 +203,25 @@ def main():
     log_info(f"Identified web server ports (excluding 5357, 5985): {', '.join(web_ports)}")
 
     for port in web_ports:
-        # Detect vhost if it exists
-        vhost = detect_vhost(target, port)
+        # Try to detect vhost if not specified
+        if args.vhost is None:
+            vhost = detect_vhost(target, port)
+        else:
+            vhost = args.vhost
+            # Add vhost to /etc/hosts
+            add_vhost_to_hosts(target, vhost)
+            
+        log_info(f"Detected vhost: {vhost}")
+
+        # If a vhost was detected, enumerate subdomains
+        if vhost is not None:
+            detect_vhost_subdomains(target, port, vhost)
 
         # Fetch robots.txt if it exists
         fetch_robots_txt(target, port) 
-        
+
         # Run Feroxbuster on identified web server ports
-        feroxbuster_command = f"feroxbuster -u http://{target}:{port} -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o {target}_feroxbuster_{port}.txt"
+        feroxbuster_command = f"feroxbuster --no-state -u http://{target}:{port} -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o {target}/feroxbuster/{target}_feroxbuster_{port}.txt"
         log_info(f"Starting Feroxbuster scan on {target}:{port}")
         run_command(feroxbuster_command)
 
