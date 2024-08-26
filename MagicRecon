@@ -40,6 +40,28 @@ def run_command(command):
     return output
 
 
+def get_open_ports(target):
+    # Step 1: Run Nmap to get open ports
+    nmap_command = f"sudo nmap -p- --min-rate=1000 -T4 {target}"
+    log_info(f"Running Nmap to find open ports on {target}")
+    output = run_command(nmap_command)
+
+    # Step 2: Extract open ports from the Nmap output
+    open_ports = re.findall(r"(\d+)/tcp\s+open", output)
+    ports = ",".join(open_ports)
+
+    return ports
+
+
+def run_detailed_nmap_scan(target, ports):
+    # Step 3: Run detailed Nmap scan on the identified open ports
+    nmap_command = f"sudo nmap -sC -sV --version-all -O -p{ports} -vvv -oN {target}/nmap/{target}_nmap.txt {target}"
+    log_info(f"Running detailed Nmap scan on ports: {ports}")
+    nmap_output = run_command(nmap_command)
+
+    return nmap_output
+
+
 def identify_web_ports(nmap_output):
     web_ports = []
     excluded_ports = {'5357', '5985'}
@@ -187,16 +209,25 @@ def main():
     vhost = None
 
     # creating folders for target
-    os.makedirs(target, exist_ok=True)
-    os.makedirs(f"{target}/nmap", exist_ok=True)
-    os.makedirs(f"{target}/feroxbuster", exist_ok=True)
+    # Create directories if they don't exist
+    if not os.path.exists(target):
+        os.makedirs(target)
+    if not os.path.exists(f"{target}/nmap"):
+        os.makedirs(f"{target}/nmap")
+    if not os.path.exists(f"{target}/feroxbuster"):
+        os.makedirs(f"{target}/feroxbuster")
 
     log_info(f"Starting recon on target: {target}")
 
-    # Run an Nmap scan to identify open ports and services
-    nmap_command = f"nmap -sC -sV -oN {target}/nmap/{target}_nmap.txt {target}"
-    log_info(f"Starting Nmap scan on {target}")
-    nmap_output = run_command(nmap_command)
+    # Get open TCP ports using Nmap
+    open_ports = get_open_ports(target)
+
+    if open_ports:
+        # Run detailed Nmap scan
+        nmap_output = run_detailed_nmap_scan(target, open_ports)
+        log_info("Nmap scan completed successfully.")
+    else:
+        log_info("No open ports found.")
 
     # Identify web server ports from Nmap output, excluding certain ports
     web_ports = identify_web_ports(nmap_output)
