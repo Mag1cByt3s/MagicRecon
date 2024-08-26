@@ -41,13 +41,19 @@ def run_command(command):
 
 
 def get_open_ports(target):
+    excluded_ports = {'5357', '5985','593','47001'}
+    
     # Step 1: Run Nmap to get open ports
     nmap_command = f"sudo nmap -p- --min-rate=1000 -T4 {target}"
     log_info(f"Running Nmap to find open ports on {target}")
     output = run_command(nmap_command)
 
     # Step 2: Extract open ports from the Nmap output
-    open_ports = re.findall(r"(\d+)/tcp\s+open", output)
+    open_ports = []
+    for port in re.findall(r"(\d+)/tcp\s+open", output):
+        if int(port) <= 49000 and port not in excluded_ports:
+            open_ports.append(port)
+
     ports = ",".join(open_ports)
 
     return ports
@@ -64,7 +70,7 @@ def run_detailed_nmap_scan(target, ports):
 
 def identify_web_ports(nmap_output):
     web_ports = []
-    excluded_ports = {'5357', '5985'}
+    excluded_ports = {'5357', '5985','593','47001'}
     lines = nmap_output.splitlines()
 
     for line in lines:
@@ -182,12 +188,13 @@ def detect_vhost_subdomains(target, port, vhost):
                 match = re.search(r"Found:\s+(\S+)", line)
                 if match:
                     discovered_vhost = match.group(1)
-                    # Add the discovered vhost to /etc/hosts
-                    add_vhost_to_hosts(target, discovered_vhost)
-                    log_info(f"Discovered vhost: {discovered_vhost}")
-                    # add discovered vhost to file vhosts.txt
-                    with open(f"{target}/vhosts.txt", "a") as f:
-                        f.write(f"{discovered_vhost}\n")
+                    if not discovered_vhost.startswith("xn--"):
+                        # Add the discovered vhost to /etc/hosts
+                        add_vhost_to_hosts(target, discovered_vhost)
+                        log_info(f"Discovered vhost: {discovered_vhost}")
+                        # add discovered vhost to file vhosts.txt
+                        with open(f"{target}/vhosts.txt", "a") as f:
+                            f.write(f"{discovered_vhost}\n")
         else:
             log_info(f"Error running Gobuster: {stderr.decode()}")
     
