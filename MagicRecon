@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# Set workdir
+WORKDIR=$(pwd)
+
 log_info() {
-    echo "[INFO] $1"
+    echo -e "\033[34m[INFO]\033[0m $1"
 }
 
 run_command() {
@@ -9,17 +12,9 @@ run_command() {
     eval "$1"
 }
 
-create_byobu_session() {
-    session_name=$1
-    command=$2
-    # Create a new Byobu session and run the command
-    byobu new-session -d -s "$session_name" -n 'Nmap Scans' bash -c "$command; exec bash"
-    sleep 1  # Give Byobu some time to initialize
-}
-
-attach_byobu_session() {
-    session_name=$1
-    byobu attach-session -t "$session_name"
+create_konsole_tab() {
+    COMMAND=$1
+    konsole --new-tab --workdir "$WORKDIR" -e $SHELL -c "$COMMAND; $SHELL"
 }
 
 identify_web_ports() {
@@ -40,7 +35,6 @@ identify_web_ports() {
 }
 
 main() {
-    session_name="recon_session"
     target="$1"
     nmap_directory="$target/nmap"
     
@@ -58,24 +52,18 @@ main() {
     
     log_info "Detected open ports: $open_ports"
     
-    # Step 2: Run the detailed Nmap scan on the detected open ports
-    detailed_nmap_output=$(sudo nmap -sC -sV --version-all -O -p"$open_ports" -vvv "$target")
-    log_info "Detailed Nmap scan output:"
-    echo "$detailed_nmap_output"
+    # Step 2: Run the detailed Nmap scan on the detected open ports in a new Konsole tab
+    detailed_nmap_command="sudo nmap -sC -sV --version-all -O -p$open_ports -vvv $target"
+    create_konsole_tab "$detailed_nmap_command"
     
-    # Step 3: Identify web ports from the detailed Nmap scan output
+    # Step 3: Run the command to identify web ports in the current terminal
+    detailed_nmap_output=$(sudo nmap -sC -sV --version-all -O -p"$open_ports" -vvv "$target")
     web_ports=$(identify_web_ports "$detailed_nmap_output")
     log_info "Identified web server ports (excluding certain ports): $web_ports"
     
-    # Step 4: Combine initial and detailed Nmap results
-    combined_nmap_output="${detailed_nmap_output}"
-
-    # Step 5: Start a Byobu session and display the combined Nmap output and web ports
-    display_command="echo \"$combined_nmap_output\"; echo \"Identified web server ports: $web_ports\""
-    create_byobu_session "$session_name" "$display_command"
-    
-    # Step 6: Attach to the Byobu session
-    attach_byobu_session "$session_name"
+    # Step 4: Display the results in a new Konsole tab
+    display_command="echo \"$detailed_nmap_output\"; echo \"Identified web server ports: $web_ports\""
+    create_konsole_tab "$display_command"
 }
 
 main "$@"
