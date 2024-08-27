@@ -14,7 +14,7 @@ run_command() {
 
 create_konsole_tab() {
     COMMAND=$1
-    konsole --new-tab --workdir "$WORKDIR" -e $SHELL -c "$COMMAND; $SHELL"
+    konsole --noclose --show-tabbar --new-tab --workdir "$WORKDIR" -e $SHELL -c "$COMMAND; $SHELL"
 }
 
 identify_web_ports() {
