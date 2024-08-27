@@ -1,237 +1,81 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
-import subprocess
-import sys
-import argparse
-import re
-from termcolor import colored
-import requests
-import os
+log_info() {
+    echo "[INFO] $1"
+}
 
-def log_info(message):
-    print(colored("[INFO] ", "blue") + message)
+run_command() {
+    log_info "Command: $1"
+    eval "$1"
+}
 
-def log_warning(message):
-    print(colored("[WARNING] ", "yellow") + message)
+create_byobu_session() {
+    session_name=$1
+    command=$2
+    # Create a new Byobu session and run the command
+    byobu new-session -d -s "$session_name" -n 'Nmap Scans' bash -c "$command; exec bash"
+    sleep 1  # Give Byobu some time to initialize
+}
 
-def check_root():
-    if os.geteuid() != 0:
-        log_warning("This script needs to be run as root or with sudo.")
-        sys.exit(1)
+attach_byobu_session() {
+    session_name=$1
+    byobu attach-session -t "$session_name"
+}
 
-def run_command(command):
-    log_info(f"Command: {command}")
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
+identify_web_ports() {
+    nmap_output="$1"
+    excluded_ports="5357,5985,593,47001,49674"
+    web_ports=()
 
-    log_info("Output:")
-    output = stdout.decode()
-    print(output)
+    while IFS= read -r line; do
+        if [[ "$line" =~ (http|ssl/http) ]]; then
+            port=$(echo "$line" | grep -oP '^\d+/tcp' | cut -d '/' -f 1)
+            if ! echo "$excluded_ports" | grep -q "$port"; then
+                web_ports+=("$port")
+            fi
+        fi
+    done <<< "$nmap_output"
 
-    if stderr:
-        log_info("Errors:")
-        print(stderr.decode(), file=sys.stderr)
+    echo "${web_ports[@]}"
+}
 
-    return output
-
-def create_tilix_tab(command, title):
-    # Command to run the script in a new tab within Tilix, maximized
-    tilix_command = f"tilix --maximize --title='{title}' -e '{command}'"
-    subprocess.Popen(tilix_command, shell=True)
-
-def get_open_ports(target):
-    excluded_ports = {'5357', '5985', '593', '47001'}
+main() {
+    session_name="recon_session"
+    target="10.10.11.22"
+    nmap_directory="$target/nmap"
     
-    nmap_command = f"sudo nmap -p- --min-rate=1000 -T4 {target}"
-    log_info(f"Running Nmap to find open ports on {target}")
-    output = run_command(nmap_command)
-
-    open_ports = []
-    for port in re.findall(r"(\d+)/tcp\s+open", output):
-        if int(port) <= 49000 and port not in excluded_ports:
-            open_ports.append(port)
-
-    ports = ",".join(open_ports)
-    return ports
-
-def run_detailed_nmap_scan(target, ports):
-    nmap_command = f"sudo nmap -sC -sV --version-all -O -p{ports} -vvv -oN {target}/nmap/{target}_nmap.txt {target}"
-    log_info(f"Running detailed Nmap scan on ports: {ports}")
-    nmap_output = run_command(nmap_command)
-    return nmap_output
-
-def identify_web_ports(nmap_output):
-    web_ports = []
-    excluded_ports = {'5357', '5985', '593', '47001'}
-    lines = nmap_output.splitlines()
-
-    for line in lines:
-        if "http" in line or "ssl/http" in line:
-            match = re.match(r"(\d+)/tcp", line)
-            if match:
-                port = match.group(1)
-                if port not in excluded_ports:
-                    web_ports.append(port)
-
-    return web_ports
-
-def fetch_robots_txt(target, port):
-    url = f"http://{target}:{port}/robots.txt"
-    log_info(f"Checking for robots.txt at {url}")
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            log_info(f"Found robots.txt on {target}:{port}")
-            print(response.text)
-        else:
-            log_info(f"No robots.txt found on {target}:{port}")
-    except requests.RequestException as e:
-        log_info(f"Failed to fetch robots.txt on {target}:{port}: {str(e)}")
-
-def add_vhost_to_hosts(target, vhost):
-    hosts_path = "/etc/hosts"
-    entry = f"{target} {vhost}\n"
+    # Ensure the nmap directory exists
+    mkdir -p "$nmap_directory"
     
-    try:
-        with open(hosts_path, "r") as hosts_file:
-            if entry.strip() in hosts_file.read():
-                log_info(f"Vhost {vhost} already exists in /etc/hosts")
-                return
-    except Exception as e:
-        log_info(f"Error reading /etc/hosts: {str(e)}")
+    # Step 1: Run the initial Nmap scan to find open ports
+    log_info "Running initial Nmap scan on target: $target"
+    open_ports=$(sudo nmap -p- --min-rate=1000 -T4 "$target" | grep ^[0-9] | cut -d '/' -f 1 | tr '\n' ',' | sed 's/,$//')
+    
+    if [ -z "$open_ports" ]; then
+        log_info "No open ports found."
         return
-
-    try:
-        with open(hosts_path, "a") as hosts_file:
-            hosts_file.write(entry)
-        log_info(f"Added vhost {vhost} to /etc/hosts")
-    except Exception as e:
-        log_info(f"Error writing to /etc/hosts: {str(e)}")
-
-def detect_vhost(target, port):
-    url = f"http://{target}:{port}/"
-    curl_command = f"curl -Ls -w '%{{url_effective}}\\n' -o /dev/null {url}"
+    fi
     
-    log_info(f"Checking for vhost on {url}")
-    log_info(f"Running command: {curl_command}")
-
-    try:
-        result = subprocess.run(curl_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        output = result.stdout.strip()
-        errors = result.stderr.strip()
-        returncode = result.returncode
-
-        log_info(f"Curl output: {output}")
-        log_info(f"Curl errors: {errors}")
-        
-        if returncode == 0:
-            detected_url = output
-            if detected_url and detected_url != url:
-                vhost = detected_url.replace("http://", "").replace("/", "")
-                if not vhost.startswith("xn--"):
-                    log_info(f"Detected vhost: {vhost}")
-                    add_vhost_to_hosts(target, vhost)
-                return vhost
-            else:
-                log_info(f"No vhost detected on {target}:{port}")
-                return None
-        else:
-            log_info(f"Error detecting vhost on {target}:{port}: {errors}")
-            return None
-
-    except Exception as e:
-        log_info(f"Exception occurred while detecting vhost on {target}:{port}: {str(e)}")
-        return None
-
-def detect_vhost_subdomains(target, port, vhost):
-    wordlist_path = '/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt'
-    gobuster_command = f"gobuster vhost -u {vhost} -w {wordlist_path} -t 50 --append-domain"
+    log_info "Detected open ports: $open_ports"
     
-    log_info(f"Starting Gobuster VHOST enumeration on {vhost} with wordlist {wordlist_path}")
+    # Step 2: Run the detailed Nmap scan on the detected open ports
+    detailed_nmap_output=$(sudo nmap -sC -sV --version-all -O -p"$open_ports" -vvv "$target")
+    log_info "Detailed Nmap scan output:"
+    echo "$detailed_nmap_output"
     
-    try:
-        process = subprocess.Popen(gobuster_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        
-        if process.returncode == 0:
-            output = stdout.decode()
-            lines = output.splitlines()
-            for line in lines:
-                match = re.search(r"Found:\s+(\S+)", line)
-                if match:
-                    discovered_vhost = match.group(1)
-                    if not discovered_vhost.startswith("xn--"):
-                        add_vhost_to_hosts(target, discovered_vhost)
-                        log_info(f"Discovered vhost: {discovered_vhost}")
-                        with open(f"{target}/vhosts.txt", "a") as f:
-                            f.write(f"{discovered_vhost}\n")
-        else:
-            log_info(f"Error running Gobuster: {stderr.decode()}")
+    # Step 3: Identify web ports from the detailed Nmap scan output
+    web_ports=$(identify_web_ports "$detailed_nmap_output")
+    log_info "Identified web server ports (excluding certain ports): $web_ports"
     
-    except Exception as e:
-        log_info(f"Exception occurred while running Gobuster: {str(e)}")
+    # Step 4: Combine initial and detailed Nmap results
+    combined_nmap_output="${detailed_nmap_output}"
 
-def main():
-    check_root()  # Ensure the script is running with root privileges
+    # Step 5: Start a Byobu session and display the combined Nmap output and web ports
+    display_command="echo \"$combined_nmap_output\"; echo \"Identified web server ports: $web_ports\""
+    create_byobu_session "$session_name" "$display_command"
+    
+    # Step 6: Attach to the Byobu session
+    attach_byobu_session "$session_name"
+}
 
-    parser = argparse.ArgumentParser(description="Run a series of recon tools on a specified target.")
-    parser.add_argument("target", help="Target IP address or hostname")
-    parser.add_argument("vhost", help="Target vhost", default=None)
-    args = parser.parse_args()
-
-    target = args.target
-    vhost = None
-
-    if not os.path.exists(target):
-        os.makedirs(target)
-    if not os.path.exists(f"{target}/nmap"):
-        os.makedirs(f"{target}/nmap")
-    if not os.path.exists(f"{target}/feroxbuster"):
-        os.makedirs(f"{target}/feroxbuster")
-
-    log_info(f"Starting recon on target: {target}")
-
-    # Step 1: Run initial Nmap scan in a Tilix tab to find open ports
-    nmap_command = f"sudo nmap -p- --min-rate=1000 -T4 {target}"
-    create_tilix_tab(nmap_command, "Initial Nmap Scan")
-
-    # Wait for the initial Nmap scan to complete
-    open_ports = get_open_ports(target)
-
-    # Step 2: Run detailed Nmap scan if ports are open
-    if open_ports:
-        nmap_command = f"sudo nmap -sC -sV --version-all -O -p{open_ports} -vvv -oN {target}/nmap/{target}_detailed_nmap.txt {target}"
-        create_tilix_tab(nmap_command, "Detailed Nmap Scan")
-        log_info("Detailed Nmap scan initiated.")
-    else:
-        log_info("No open ports found.")
-        return
-
-    # Step 3: Identify web server ports and create Tilix tabs for each tool
-    nmap_output = run_detailed_nmap_scan(target, open_ports)
-    web_ports = identify_web_ports(nmap_output)
-    log_info(f"Identified web server ports (excluding certain ports): {', '.join(web_ports)}")
-
-    for port in web_ports:
-        # Detect vhost if not specified
-        if args.vhost is None:
-            vhost = detect_vhost(target, port)
-        else:
-            vhost = args.vhost
-            add_vhost_to_hosts(target, vhost)
-
-        log_info(f"Detected vhost: {vhost}")
-
-        # Run Gobuster in a new Tilix tab
-        gobuster_command = f"gobuster vhost -u {vhost} -w /usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt -t 50 --append-domain"
-        create_tilix_tab(gobuster_command, f"Gobuster_{port}")
-
-        # Fetch robots.txt if it exists
-        fetch_robots_txt(target, port)
-
-        # Run Feroxbuster in a new Tilix tab
-        feroxbuster_command = f"feroxbuster --no-state -u http://{target}:{port} -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o {target}/feroxbuster/{target}_feroxbuster_{port}.txt"
-        create_tilix_tab(feroxbuster_command, f"Feroxbuster_{port}")
-
-if __name__ == "__main__":
-    main()
+main "$@"
