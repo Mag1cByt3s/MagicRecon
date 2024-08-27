@@ -41,7 +41,7 @@ identify_web_ports() {
 
 main() {
     session_name="recon_session"
-    target="10.10.11.22"
+    target="$1"
     nmap_directory="$target/nmap"
     
     # Ensure the nmap directory exists
