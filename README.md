@@ -36,8 +36,10 @@ sudo ./MagicRecon <target> [<vhost>]
 ### Example
 
 ```bash
-sudo ./MagicRecon 10.10.11.22 blazorized.htb
+./MagicRecon 10.10.11.22 blazorized.htb
 ```
+=> run MagicRecon under your own user. Do not run as root, sudo will get used internally.
+
 <br>
 This command will:
 

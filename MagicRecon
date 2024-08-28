@@ -63,11 +63,11 @@ main() {
     log_info "Detected open ports: $open_ports"
     
     # Step 2: Run the detailed Nmap scan on the detected open ports in a new Konsole tab
-    detailed_nmap_command="sudo nmap -sC -sV --version-all -O -p$open_ports -vvv $target"
+    detailed_nmap_command="sudo nmap -sC -sV --version-all -O -p$open_ports -oN $nmap_directory/nmap_$target.txt -vvv $target"
     create_konsole_tab "$detailed_nmap_command"
     
     # Step 3: Run the command to identify web ports in the current terminal
-    detailed_nmap_output=$(sudo nmap -sC -sV --version-all -O -p"$open_ports" -vvv "$target")
+    detailed_nmap_output=$(sudo nmap -sC -sV --version-all -O -p"$open_ports" -vvv  "$target")
     web_ports=$(identify_web_ports "$detailed_nmap_output")
     log_info "Identified web server ports (excluding certain ports): $web_ports"
     
