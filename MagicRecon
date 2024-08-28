@@ -7,11 +7,6 @@ log_info() {
     echo -e "\033[34m[INFO]\033[0m $1"
 }
 
-run_command() {
-    log_info "Command: $1"
-    eval "$1"
-}
-
 create_konsole_tab() {
     COMMAND=$1
     konsole --noclose --show-tabbar --new-tab --workdir "$WORKDIR" -e $SHELL -c "$COMMAND; $SHELL"
@@ -32,6 +27,21 @@ identify_web_ports() {
     done <<< "$nmap_output"
 
     echo "${web_ports[@]}"
+}
+
+feroxbuster_brute_force() {
+    target="$1"
+    web_ports="$2"
+    feroxbuster_directory="$target/feroxbuster"
+    wordlist="/usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt"
+    
+    # Ensure the feroxbuster directory exists
+    mkdir -p "$feroxbuster_directory"
+    
+    for port in $(echo "$web_ports" | tr ',' '\n'); do
+        log_info "Running Feroxbuster on target: $target, port: $port"
+        feroxbuster --no-state --url "http://$target:$port" --wordlist "$wordlist" --output "$feroxbuster_directory/$port.txt" --depth 4 --threads 40 --auto-tune --extract-links --insecure --extensions "html,htm,php,asp,aspx,jsp" --filter-status "404,405,503,502,411,403,501,400" --methods "GET,POST,PUT" --filter-size 0 --filter-words 0
+    done
 }
 
 main() {
@@ -61,8 +71,8 @@ main() {
     web_ports=$(identify_web_ports "$detailed_nmap_output")
     log_info "Identified web server ports (excluding certain ports): $web_ports"
     
-    # Step 4: Display the results in a new Konsole tab
-    display_command="echo \"$detailed_nmap_output\"; echo \"Identified web server ports: $web_ports\""
+    # Step 4: Display the results and run feroxbuster on the identified web server ports  in a new Konsole tab
+    display_command="echo \"$detailed_nmap_output\"; echo \"Identified web server ports (excluding certain ports): $web_ports\"; $(declare -f feroxbuster_brute_force); feroxbuster_brute_force $target \"$web_ports\""
     create_konsole_tab "$display_command"
 }
 
