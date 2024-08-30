@@ -23,7 +23,7 @@ To run `MagicRecon`, you need to provide a target IP address or hostname. The to
 ### Basic Command
 
 ```bash
-sudo ./MagicRecon <target> [<vhost>]
+./MagicRecon <target> [<vhost>]
 ```
 
 - **`<target>`**: The IP address or hostname of the target you want to scan.
