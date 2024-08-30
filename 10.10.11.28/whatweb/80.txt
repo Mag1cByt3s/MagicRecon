@@ -1,0 +1,157 @@
+WhatWeb report for http://10.10.11.28:80
+Status    : 200 OK
+Title     : Sea - Home
+IP        : 10.10.11.28
+Country   : RESERVED, ZZ
+
+Summary   : Apache[2.4.41], Bootstrap[3.3.7], Cookies[PHPSESSID], HTML5, HTTPServer[Ubuntu Linux][Apache/2.4.41 (Ubuntu)], JQuery[1.12.4], Script, X-UA-Compatible[IE=edge]
+
+Detected Plugins:
+[ Apache ]
+	The Apache HTTP Server Project is an effort to develop and 
+	maintain an open-source HTTP server for modern operating 
+	systems including UNIX and Windows NT. The goal of this 
+	project is to provide a secure, efficient and extensible 
+	server that provides HTTP services in sync with the current 
+	HTTP standards. 
+
+	Version      : 2.4.41 (from HTTP Server Header)
+	Google Dorks: (3)
+	Website     : http://httpd.apache.org/
+
+[ Bootstrap ]
+	Bootstrap is an open source toolkit for developing with 
+	HTML, CSS, and JS. 
+
+	Version      : 3.3.7
+	Version      : 3.3.7
+	Website     : https://getbootstrap.com/
+
+[ Cookies ]
+	Display the names of cookies in the HTTP headers. The 
+	values are not returned to save on space. 
+
+	String       : PHPSESSID
+
+[ HTML5 ]
+	HTML version 5, detected by the doctype declaration 
+
+
+[ HTTPServer ]
+	HTTP server header string. This plugin also attempts to 
+	identify the operating system from the server header. 
+
+	OS           : Ubuntu Linux
+	String       : Apache/2.4.41 (Ubuntu) (from server string)
+
+[ JQuery ]
+	A fast, concise, JavaScript that simplifies how to traverse 
+	HTML documents, handle events, perform animations, and add 
+	AJAX. 
+
+	Version      : 1.12.4
+	Website     : http://jquery.com/
+
+[ Script ]
+	This plugin detects instances of script HTML elements and 
+	returns the script language/type. 
+
+
+[ X-UA-Compatible ]
+	This plugin retrieves the X-UA-Compatible value from the 
+	HTTP header and meta http-equiv tag. - More Info: 
+	http://msdn.microsoft.com/en-us/library/cc817574.aspx 
+
+	String       : IE=edge
+
+HTTP Headers:
+	HTTP/1.0 200 OK
+	Date: Fri, 30 Aug 2024 04:41:17 GMT
+	Server: Apache/2.4.41 (Ubuntu)
+	Set-Cookie: PHPSESSID=adgud5163j1ea9ql2882k0c5c4; path=/
+	Expires: Thu, 19 Nov 1981 08:52:00 GMT
+	Cache-Control: no-store, no-cache, must-revalidate
+	Pragma: no-cache
+	Vary: Accept-Encoding
+	Content-Encoding: gzip
+	Content-Length: 1417
+	Connection: close
+	Content-Type: text/html; charset=UTF-8
+	
+WhatWeb report for http://10.10.11.28:80
+Status    : 200 OK
+Title     : Sea - Home
+IP        : 10.10.11.28
+Country   : RESERVED, ZZ
+
+Summary   : Apache[2.4.41], Bootstrap[3.3.7], Cookies[PHPSESSID], HTML5, HTTPServer[Ubuntu Linux][Apache/2.4.41 (Ubuntu)], JQuery[1.12.4], Script, X-UA-Compatible[IE=edge]
+
+Detected Plugins:
+[ Apache ]
+	The Apache HTTP Server Project is an effort to develop and 
+	maintain an open-source HTTP server for modern operating 
+	systems including UNIX and Windows NT. The goal of this 
+	project is to provide a secure, efficient and extensible 
+	server that provides HTTP services in sync with the current 
+	HTTP standards. 
+
+	Version      : 2.4.41 (from HTTP Server Header)
+	Google Dorks: (3)
+	Website     : http://httpd.apache.org/
+
+[ Bootstrap ]
+	Bootstrap is an open source toolkit for developing with 
+	HTML, CSS, and JS. 
+
+	Version      : 3.3.7
+	Version      : 3.3.7
+	Website     : https://getbootstrap.com/
+
+[ Cookies ]
+	Display the names of cookies in the HTTP headers. The 
+	values are not returned to save on space. 
+
+	String       : PHPSESSID
+
+[ HTML5 ]
+	HTML version 5, detected by the doctype declaration 
+
+
+[ HTTPServer ]
+	HTTP server header string. This plugin also attempts to 
+	identify the operating system from the server header. 
+
+	OS           : Ubuntu Linux
+	String       : Apache/2.4.41 (Ubuntu) (from server string)
+
+[ JQuery ]
+	A fast, concise, JavaScript that simplifies how to traverse 
+	HTML documents, handle events, perform animations, and add 
+	AJAX. 
+
+	Version      : 1.12.4
+	Website     : http://jquery.com/
+
+[ Script ]
+	This plugin detects instances of script HTML elements and 
+	returns the script language/type. 
+
+
+[ X-UA-Compatible ]
+	This plugin retrieves the X-UA-Compatible value from the 
+	HTTP header and meta http-equiv tag. - More Info: 
+	http://msdn.microsoft.com/en-us/library/cc817574.aspx 
+
+	String       : IE=edge
+
+HTTP Headers:
+	HTTP/1.0 200 OK
+	Date: Fri, 30 Aug 2024 04:47:23 GMT
+	Server: Apache/2.4.41 (Ubuntu)
+	Set-Cookie: PHPSESSID=d78itn6i3brglk9f1dqe67gd0u; path=/
+	Vary: Accept-Encoding
+	Content-Encoding: gzip
+	Content-Length: 1417
+	Connection: close
+	Content-Type: text/html; charset=UTF-8
+	

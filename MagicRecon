@@ -9,7 +9,7 @@ log_info() {
 
 create_konsole_tab() {
     COMMAND=$1
-    konsole --noclose --show-tabbar --new-tab --workdir "$WORKDIR" -e $SHELL -c "$COMMAND; $SHELL"
+    konsole --noclose --show-tabbar --new-tab --workdir "$WORKDIR" -e $SHELL -c "$COMMAND; exec $SHELL"
 }
 
 identify_web_ports() {
@@ -44,6 +44,20 @@ feroxbuster_brute_force() {
     done
 }
 
+run_whatweb() {
+    target="$1"
+    web_ports="$2"
+    whatweb_directory="$target/whatweb"
+   
+    # Ensure the whatweb directory exists
+    mkdir -p "$whatweb_directory"
+    
+    for port in $(echo "$web_ports" | tr ',' '\n'); do
+        log_info "Running whatweb on target: $target, port: $port"
+        whatweb -v -a 3 --no-errors "http://$target:$port" --log-verbose="$whatweb_directory/$port.txt"
+    done
+}
+
 main() {
     target="$1"
     nmap_directory="$target/nmap"
@@ -62,18 +76,22 @@ main() {
     
     log_info "Detected open ports: $open_ports"
     
-    # Step 2: Run the detailed Nmap scan on the detected open ports in a new Konsole tab
+    # Step 2: Run the detailed Nmap scan on the detected open ports and capture output
     detailed_nmap_command="sudo nmap -sC -sV --version-all -O -p$open_ports -oN $nmap_directory/nmap_$target.txt -vvv $target"
-    create_konsole_tab "$detailed_nmap_command"
+    detailed_nmap_output=$(eval "$detailed_nmap_command")
+    log_info "Detailed Nmap scan completed."
     
-    # Step 3: Run the command to identify web ports in the current terminal
-    detailed_nmap_output=$(sudo nmap -sC -sV --version-all -O -p"$open_ports" -vvv  "$target")
+    # Step 3: Identify web ports from the detailed Nmap scan output
     web_ports=$(identify_web_ports "$detailed_nmap_output")
     log_info "Identified web server ports (excluding certain ports): $web_ports"
     
-    # Step 4: Display the results and run feroxbuster on the identified web server ports  in a new Konsole tab
-    display_command="echo \"$detailed_nmap_output\"; echo \"Identified web server ports (excluding certain ports): $web_ports\"; $(declare -f feroxbuster_brute_force); feroxbuster_brute_force $target \"$web_ports\""
-    create_konsole_tab "$display_command"
+    # Step 4: Run Feroxbuster in a new Konsole tab
+    ferox_command="$(declare -f log_info); $(declare -f feroxbuster_brute_force); feroxbuster_brute_force $target \"$web_ports\""
+    create_konsole_tab "$ferox_command"
+    
+    # Step 5: Run WhatWeb in a new Konsole tab
+    whatweb_command="$(declare -f log_info); $(declare -f run_whatweb); run_whatweb $target \"$web_ports\""
+    create_konsole_tab "$whatweb_command"
 }
 
 main "$@"
